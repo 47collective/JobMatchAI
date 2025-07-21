@@ -1,0 +1,59 @@
+# Environment variables (contains sensitive information)
+.env
+
+# Personal files (contains personal information)
+AllMyStuff/
+*Resume*
+*CoverLetter*
+
+# Application output folders
+*/
+!AllMyStuff/
+!__pycache__/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Screenshots and debug files
+*.png
+*.jpg
+*.jpeg
