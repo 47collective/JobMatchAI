@@ -1,33 +1,46 @@
 # AI Job Application Agent
 
-An intelligent job application automation tool that generates personalized cover letters and extracts job descriptions from various job boards.
+An intelligent job application automation tool that uses local Large Language Models (LLMs) via Ollama to generate highly personalized cover letters and extract job information from various job boards.
 
 ## Features
 
-- 🤖 **Automated Job Information Extraction**: Extracts job title, company, and location from job URLs
-- 📝 **Personalized Cover Letter Generation**: Creates tailored cover letters using your resume and instructions
+- 🤖 **Local LLM-Powered Cover Letters**: Uses Ollama with local models (no API costs!)
+- 📊 **Intelligent Job Matching**: Analyzes resume and job descriptions to find the best alignment points
 - 🗂️ **Organized File Management**: Creates timestamped folders for each application
 - 🌐 **Multi-Platform Support**: Works with various job boards (iCIMS, Greenhouse, etc.)
 - 🔄 **Smart Fallbacks**: Handles different page structures and chat overlays
 - ⚙️ **Environment-Based Configuration**: Secure configuration using .env files
+- 🎯 **Dynamic Content Generation**: No templates - each cover letter is uniquely crafted
+- 🔒 **Privacy-First**: Everything runs locally - no data sent to external APIs
+
+## How It Works
+
+1. **Resume Analysis**: Extracts key information, skills, and achievements from your resume
+2. **Job Intelligence**: Analyzes job descriptions to understand requirements and company focus
+3. **Local LLM Generation**: Uses Ollama to craft compelling, personalized cover letters locally
+4. **Quality Assurance**: Ensures professional formatting and appropriate tone
+5. **File Organization**: Saves everything in organized folders for easy access
 
 ## Supported Job Boards
 
 - iCIMS Career Portals
-- Greenhouse Job Boards
+- Greenhouse Job Boards  
 - Custom job posting sites
+- Any job board with accessible content
 
 ## Prerequisites
 
 - Python 3.8+
 - Chrome/Chromium browser (for Playwright)
+- Ollama installed and running locally (https://ollama.ai/download)
+- A local LLM model (e.g., llama3.1, mistral, codellama)
 
 ## Installation
 
 1. Clone this repository:
 ```bash
-git clone <your-repo-url>
-cd job-apply-ai
+git clone https://github.com/47collective/JobMatchAI.git
+cd JobMatchAI
 ```
 
 2. Create a virtual environment:
@@ -46,15 +59,58 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-5. Set up your configuration:
+5. Install and start Ollama:
+```bash
+# Install Ollama from https://ollama.ai/download
+# Then pull a suitable model (recommended):
+ollama pull llama3
+
+# Or try other models:
+ollama pull llama3.1
+ollama pull mistral
+ollama pull codellama
+```
+
+6. Set up your configuration:
 ```bash
 cp .env.example .env
 ```
 
-6. Edit `.env` file with your information:
-   - Set `RESUME_PATH` to point to your resume file
-   - Set `COVER_LETTER_INSTRUCTIONS_PATH` to your cover letter template
-   - Adjust browser settings as needed
+7. Edit `.env` file with your information:
+   - **REQUIRED**: Set `RESUME_PATH` to point to your resume file
+   - **RECOMMENDED**: Adjust `OLLAMA_MODEL` to match your preferred local model (default: llama3)
+   - Set `COVER_LETTER_INSTRUCTIONS_PATH` to any additional instructions (optional)
+   - Adjust Ollama and browser settings as needed
+
+## Configuration
+
+### Required Configuration
+- `RESUME_PATH`: Path to your resume file (plain text format recommended)
+- Ollama running locally with a suitable model
+
+### Optional Configuration
+- `COVER_LETTER_INSTRUCTIONS_PATH`: Additional instructions for cover letter style
+- `OLLAMA_HOST`: Ollama server URL (default: http://localhost:11434)
+- `OLLAMA_MODEL`: AI model to use (default: llama3)
+- `OLLAMA_MAX_TOKENS`: Maximum response length (default: 2000)
+- `OLLAMA_TEMPERATURE`: Creativity level 0-1 (default: 0.7)
+- `BROWSER_HEADLESS`: Run browser in background (default: true)
+
+## Recommended Models
+
+For best results, use these Ollama models:
+- **llama3** (8B): Excellent general purpose, great for professional writing (recommended)
+- **llama3.1** (8B or 70B): Latest version with improvements
+- **mistral** (7B): Fast and efficient, good quality output
+- **codellama** (7B): Good for technical roles with coding focus
+- **llama2** (7B/13B): Reliable fallback option
+
+## Testing Your Setup
+
+Test your Ollama connection:
+```bash
+curl http://localhost:11434/api/generate -d '{"model": "llama3", "prompt": "Hello, world!"}'
+```
 
 ## Usage
 
@@ -85,10 +141,29 @@ Create a text file containing your resume information. The script will automatic
 - Technical skills
 
 ### Cover Letter Instructions
-Create a text file with your cover letter preferences including:
-- Quick hits/achievements to highlight
-- Preferred tone and style
-- Specific experiences to emphasize
+Create a text file with your cover letter preferences. The script will automatically parse:
+
+**Quick Hits Section**: List your key achievements starting with bullet points (• or -)
+```
+Quick Hits:
+• Your first major achievement
+• Your second accomplishment  
+• Your unique superpower
+• What motivates you
+• Your best reference
+```
+
+**Experience Content**: Include paragraphs describing your experience that the script can extract:
+- Recent leadership roles and achievements
+- Technical expertise and projects
+- Current activities and interests
+
+**Contact Info**: Include your LinkedIn profile URL in the format:
+```
+https://www.linkedin.com/in/your-profile/
+```
+
+The script will automatically extract and format these elements into a professional cover letter.
 
 ### Environment Variables
 
@@ -104,7 +179,7 @@ Create a text file with your cover letter preferences including:
 
 For each job application, the script creates a folder named `CompanyName_YYYYMMDD_HHMMSS` containing:
 
-- `YourName_CompanyName_CoverLetter.txt` - Personalized cover letter
+- `ApplicantName_CompanyName_CoverLetter.txt` - Personalized cover letter
 - `CompanyName_JobDescription.txt` - Extracted job description
 
 ## Troubleshooting
