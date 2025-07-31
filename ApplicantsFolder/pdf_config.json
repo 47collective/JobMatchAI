@@ -1,0 +1,31 @@
+{
+  "pdf_formatting": {
+    "page_size": "letter",
+    "margins": {
+      "top": 1.0,
+      "bottom": 1.0,
+      "left": 1.0,
+      "right": 1.0
+    },
+    "fonts": {
+      "title_font": "Helvetica-Bold",
+      "title_size": 16,
+      "body_font": "Helvetica",
+      "body_size": 11,
+      "contact_font": "Helvetica",
+      "contact_size": 10
+    },
+    "spacing": {
+      "title_space_after": 20,
+      "paragraph_space_after": 12,
+      "line_height": 14,
+      "contact_space_before": 20
+    },
+    "formatting": {
+      "show_title": true,
+      "title_text": "",
+      "justify_text": false,
+      "indent_paragraphs": false
+    }
+  }
+}

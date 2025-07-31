@@ -1,0 +1,77 @@
+{
+  "template_config": {
+    "name": "Professional Template",
+    "version": "1.0",
+    "description": "Concise, impact-focused cover letter with Quick Hits format",
+    
+    "structure": {
+     
+      "salutation": {
+        "format": "Dear {{company_name}},"
+      },
+      
+      "signature": {
+        "closing": "thanks,",
+        "name": "YOUR FULL NAME",
+        "contact_info": [
+          "your.email@example.com",
+          "https://www.linkedin.com/in/yourprofile/"
+        ]
+      },
+      
+      "paragraphs": {
+        "count": 2,
+        "style": "concise_impact",
+        "focus": ["experience_alignment", "specific_achievements", "role_contribution"]
+      },
+      
+      "closing": {
+        "style": "casual_professional",
+        "signature": "thanks,\\n\\nYour Full Name\\nyour.email@example.com\\nhttps://www.linkedin.com/in/yourprofile/"
+      }
+    },
+    
+    "content_guidelines": {
+      "tone": "confident_but_approachable",
+      "length": "2_paragraphs_max",
+      "approach": "dynamic_resume_job_matching",
+      
+      "requirements": [
+        "Always start with Quick Hits section",
+        "Use specific metrics and achievements",
+        "Reference company knowledge",
+        "Show value alignment",
+        "End with confident call to action"
+      ],
+      
+      "avoid": [
+        "Generic template language",
+        "Overly formal tone",
+        "Rehashing entire resume",
+        "Desperate or begging language"
+      ]
+    },
+    
+    "dynamic_elements": {
+      "company_research": {
+        "include_mission": true,
+        "include_recent_news": true,
+        "include_industry_trends": false
+      },
+      
+      "resume_matching": {
+        "highlight_relevant_experience": true,
+        "quantify_achievements": true,
+        "connect_to_role_requirements": true
+      }
+    },
+    
+    "customization_notes": [
+      "Replace all placeholder text with your actual information",
+      "Update Quick Hits items to reflect your personal brand",
+      "Customize contact information and signature",
+      "Adjust tone and focus areas to match your field",
+      "This configuration works with the LLM generation system"
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+YOUR FULL NAME
+your.email@example.com | (555) 123-4567 | LinkedIn: https://linkedin.com/in/yourprofile
+City, State | Portfolio: https://yourportfolio.com
+
+PROFESSIONAL SUMMARY
+Senior [Your Role] with [X]+ years of experience in [your industry/specialty]. Proven track record of [key achievement area] and [another key area]. Expertise in [technology/skill 1], [technology/skill 2], and [technology/skill 3].
+
+EXPERIENCE
+
+[Most Recent Company] | [Your Title] | [Start Date] - [End Date or Present]
+• [Key achievement with quantified result - e.g., "Led team of X engineers to deliver Y project, resulting in Z% improvement"]
+• [Another achievement with metrics]
+• [Technical accomplishment]
+• [Leadership or process improvement]
+
+[Previous Company] | [Your Title] | [Start Date] - [End Date]
+• [Achievement with impact]
+• [Technical project or innovation]
+• [Team leadership or collaboration]
+
+[Earlier Company] | [Your Title] | [Start Date] - [End Date]
+• [Key contribution]
+• [Technical skill demonstration]
+
+TECHNICAL SKILLS
+• Languages: [e.g., Python, JavaScript, Java, etc.]
+• Frameworks: [e.g., React, Django, Spring, etc.]
+• Tools & Platforms: [e.g., AWS, Docker, Kubernetes, etc.]
+• Databases: [e.g., PostgreSQL, MongoDB, Redis, etc.]
+
+EDUCATION
+[Degree] in [Field] | [University Name] | [Year]
+[Relevant coursework, honors, or certifications]
+
+ACHIEVEMENTS
+• [Patent, publication, or significant recognition]
+• [Speaking engagement or conference presentation]
+• [Open source contribution or side project]
+
+===
+INSTRUCTIONS FOR USE:
+1. Replace ALL placeholder text with your actual information
+2. Remove these instructions before using
+3. Keep the format but customize content to match your experience
+4. Quantify achievements wherever possible (numbers, percentages, dollar amounts)
+5. Tailor this resume for each job application by emphasizing relevant skills
+===

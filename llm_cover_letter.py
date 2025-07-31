@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LLM-powered cover letter generation using Ollama local LLM
+LLM-powered cover letter generation using dynamic Tier 1 LLM providers
 """
 import os
 import re
@@ -9,42 +9,96 @@ import json
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)  # Force override existing environment variables
 
 class LLMCoverLetterGenerator:
-    """Generates personalized cover letters using local Ollama LLM"""
+    """Generates personalized cover letters using dynamic Tier 1 LLM providers"""
     
     def __init__(self):
-        """Initialize the LLM generator with Ollama configuration"""
-        self.ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
-        self.model = os.getenv('OLLAMA_MODEL', 'llama3.2:latest')
-        self.temperature = float(os.getenv('OLLAMA_TEMPERATURE', '0.7'))
-        self.max_tokens = int(os.getenv('OLLAMA_MAX_TOKENS', '2000'))
+        """Initialize the LLM generator with dynamic tier configuration"""
+        # Use Tier 1 for cover letter generation (high quality)
+        self.tier1_provider = os.getenv('TIER1_LLM_PROVIDER')
         
-        # Test Ollama connection
-        self._test_ollama_connection()
+        if not self.tier1_provider:
+            raise ValueError("TIER1_LLM_PROVIDER must be set in .env file")
+            
+        self.tier1_provider = self.tier1_provider.lower()
+        
+        # Initialize Tier 1 configuration dynamically
+        self._init_tier1_config()
+        
+        print(f"   🎯 Tier 1 LLM (Cover Letter Generation): {self.tier1_provider}")
     
-    def _test_ollama_connection(self):
-        """Test connection to Ollama"""
+    def _init_tier1_config(self):
+        """Dynamically initialize Tier 1 LLM configuration based on .env file."""
+        provider_upper = self.tier1_provider.upper()
+        
+        # Dynamic environment variable lookup
+        base_url_key = f'{provider_upper}_BASE_URL'
+        host_key = f'{provider_upper}_HOST'
+        model_key = f'{provider_upper}_MODEL'
+        api_key_key = f'{provider_upper}_API_KEY'
+        
+        # Check if this is an API-based service or local service
+        api_key = os.getenv(api_key_key)
+        base_url = os.getenv(base_url_key) or os.getenv(host_key)
+        model = os.getenv(model_key)
+        
+        if api_key:
+            # API-based service
+            self.tier1_api_key = api_key
+            self.tier1_model = model or f'{self.tier1_provider}-default'
+            
+            # Initialize API client dynamically
+            if 'gemini' in self.tier1_provider.lower():
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=api_key)
+                    self.tier1_client = genai.GenerativeModel(model or 'gemini-1.5-flash')
+                    print(f"   ✅ {self.tier1_provider.title()} connected - using model: {self.tier1_model}")
+                except ImportError:
+                    raise ValueError("google-generativeai package is required. Install with: pip install google-generativeai")
+                except Exception as e:
+                    raise ValueError(f"Failed to initialize {self.tier1_provider}: {e}")
+            # Add other API providers here as needed
+            
+        elif base_url:
+            # Local/self-hosted service
+            self.tier1_base_url = base_url
+            self.tier1_model = model
+            self.temperature = float(os.getenv(f'{provider_upper}_TEMPERATURE', '0.7'))
+            self.max_tokens = int(os.getenv(f'{provider_upper}_MAX_TOKENS', '2000'))
+            
+            if not model:
+                raise ValueError(f"{model_key} must be set in .env file")
+            
+            # Test connection for local services
+            self._test_local_connection()
+            
+        else:
+            raise ValueError(f"No valid configuration found for {self.tier1_provider}. Need either {api_key_key} or {base_url_key}/{host_key} in .env file")
+    
+    def _test_local_connection(self):
+        """Test connection to local LLM service"""
         try:
-            response = requests.get(f"{self.ollama_host}/api/tags", timeout=5)
+            response = requests.get(f"{self.tier1_base_url}/api/tags", timeout=5)
             if response.status_code == 200:
                 models = response.json().get('models', [])
                 available_models = [model['name'] for model in models]
-                if self.model not in available_models:
-                    print(f"   ⚠️ Model '{self.model}' not found. Available models: {available_models}")
+                if self.tier1_model not in available_models:
+                    print(f"   ⚠️ Model '{self.tier1_model}' not found. Available models: {available_models}")
                     if available_models:
-                        self.model = available_models[0]
-                        print(f"   🔄 Using {self.model} instead")
-                print(f"   ✅ Ollama connected - using model: {self.model}")
+                        self.tier1_model = available_models[0]
+                        print(f"   🔄 Using {self.tier1_model} instead")
+                print(f"   ✅ {self.tier1_provider.title()} connected - using model: {self.tier1_model}")
             else:
-                raise Exception(f"Ollama API returned status {response.status_code}")
+                raise Exception(f"Local LLM API returned status {response.status_code}")
         except Exception as e:
-            raise ValueError(f"Cannot connect to Ollama at {self.ollama_host}. Make sure Ollama is running. Error: {e}")
+            raise ValueError(f"Cannot connect to {self.tier1_provider} at {self.tier1_base_url}. Make sure service is running. Error: {e}")
     
     def generate_cover_letter(self, resume_text, job_info, instructions=""):
         """
-        Generate a personalized cover letter using local Ollama LLM
+        Generate a personalized cover letter using dynamic Tier 1 LLM
         
         Args:
             resume_text (str): The candidate's full resume text
@@ -66,11 +120,11 @@ class LLMCoverLetterGenerator:
                 instructions
             )
             
-            # Generate cover letter using Ollama
-            response = self._call_ollama(prompt)
+            # Generate cover letter using dynamic LLM
+            response = self._call_tier1_llm(prompt)
             
             if not response:
-                raise Exception("Empty response from Ollama")
+                raise Exception("Empty response from LLM")
             
             # Post-process the cover letter
             cover_letter = self._post_process_cover_letter(response, candidate_info)
@@ -78,14 +132,48 @@ class LLMCoverLetterGenerator:
             return cover_letter
             
         except Exception as e:
-            print(f"❌ Error generating cover letter with Ollama: {e}")
+            print(f"❌ Error generating cover letter with {self.tier1_provider}: {e}")
             raise
     
-    def _call_ollama(self, prompt):
-        """Make API call to Ollama"""
+    def _call_tier1_llm(self, prompt):
+        """Dynamically call Tier 1 LLM based on configuration"""
+        try:
+            # Check if this is an API-based service or local service
+            if hasattr(self, 'tier1_api_key'):
+                # API-based service
+                return self._call_api_service(prompt)
+            elif hasattr(self, 'tier1_base_url'):
+                # Local service
+                return self._call_local_service(prompt)
+            else:
+                raise ValueError(f"No valid configuration found for Tier 1 ({self.tier1_provider})")
+                
+        except Exception as e:
+            print(f"   ⚠️ Tier 1 LLM ({self.tier1_provider}) call failed: {e}")
+            raise
+    
+    def _call_api_service(self, prompt):
+        """Call an API-based LLM service"""
+        if hasattr(self, 'tier1_client') and hasattr(self.tier1_client, 'generate_content'):
+            # This looks like a Google Generative AI client
+            try:
+                response = self.tier1_client.generate_content(prompt)
+                
+                if response.text:
+                    return response.text.strip()
+                else:
+                    raise Exception("API returned empty response")
+                    
+            except Exception as e:
+                raise Exception(f"Failed to call API service: {e}")
+        else:
+            raise Exception(f"Unsupported API client for {self.tier1_provider}")
+    
+    def _call_local_service(self, prompt):
+        """Call a local LLM service"""
         try:
             payload = {
-                "model": self.model,
+                "model": self.tier1_model,
                 "prompt": prompt,
                 "stream": False,
                 "options": {
@@ -95,7 +183,7 @@ class LLMCoverLetterGenerator:
             }
             
             response = requests.post(
-                f"{self.ollama_host}/api/generate",
+                f"{self.tier1_base_url}/api/generate",
                 json=payload,
                 timeout=120  # Allow up to 2 minutes for generation
             )
@@ -104,12 +192,12 @@ class LLMCoverLetterGenerator:
                 result = response.json()
                 return result.get('response', '').strip()
             else:
-                raise Exception(f"Ollama API error: {response.status_code} - {response.text}")
+                raise Exception(f"Local LLM API error: {response.status_code} - {response.text}")
                 
         except requests.exceptions.Timeout:
-            raise Exception("Ollama request timed out - the model may be too slow or the prompt too complex")
+            raise Exception("Local LLM request timed out - the model may be too slow or the prompt too complex")
         except Exception as e:
-            raise Exception(f"Failed to call Ollama API: {e}")
+            raise Exception(f"Failed to call local LLM API: {e}")
     
     def _extract_candidate_info(self, resume_text):
         """Extract key candidate information from resume"""
@@ -205,7 +293,7 @@ AVOID:
         company = job_info.get('company', 'the company')
         job_description = job_info.get('description', '')
         
-        # For Ollama, we need to combine system and user prompts
+        # For local services, combine system and user prompts
         system_prompt = self._get_system_prompt()
         
         prompt = f"""{system_prompt}
@@ -248,27 +336,70 @@ Please write the complete cover letter now:"""
     def _post_process_cover_letter(self, cover_letter, candidate_info):
         """Post-process the generated cover letter"""
         
-        # Ensure proper signature
-        if not any(line.strip() == candidate_info['name'] for line in cover_letter.split('\n')):
-            # Add signature if not present
-            if not cover_letter.endswith('\n'):
-                cover_letter += '\n'
-            
-            cover_letter += f"\nBest regards,\n\n{candidate_info['name']}"
-            
-            # Add contact info if available
-            contact_lines = []
-            if candidate_info['email'] != 'candidate@email.com':
-                contact_lines.append(candidate_info['email'])
-            if candidate_info['phone']:
-                contact_lines.append(candidate_info['phone'])
-            if candidate_info['linkedin']:
-                contact_lines.append(candidate_info['linkedin'])
-            
-            if contact_lines:
-                cover_letter += '\n' + '\n'.join(contact_lines)
+        # Remove LLM's introductory text (everything before Quick Hits or Dear)
+        lines = cover_letter.split('\n')
+        start_idx = 0
         
-        # Clean up any formatting issues
+        for i, line in enumerate(lines):
+            line_stripped = line.strip()
+            # Look for the start of actual cover letter content
+            if (line_stripped.startswith('**Quick Hits:**') or 
+                line_stripped.startswith('Quick Hits:') or
+                line_stripped.startswith('* Ensure engineering') or
+                line_stripped.startswith('Dear ') or
+                line_stripped.startswith('To the Hiring')):
+                start_idx = i
+                break
+        
+        # Keep only the cover letter content
+        cover_letter = '\n'.join(lines[start_idx:])
+        
+        # Fix Quick Hits formatting - ensure proper bold formatting and line breaks
+        if '**Quick Hits:**' in cover_letter:
+            # Find and replace the Quick Hits section
+            quick_hits_pattern = r'[\*\s]*\*\*Quick Hits:\*\*.*?(?=\n\n[A-Z]|Dear|To the|With over)'
+            match = re.search(quick_hits_pattern, cover_letter, re.DOTALL)
+            if match:
+                quick_hits_text = match.group(0)
+                # Extract bullet points
+                bullets = re.findall(r'\* ([^*]+?)(?=\*|$)', quick_hits_text, re.DOTALL)
+                if bullets:
+                    # Rebuild with proper formatting
+                    formatted_quick_hits = "**Quick Hits:**\n\n"
+                    for bullet in bullets:
+                        formatted_quick_hits += f"* {bullet.strip()}\n"
+                    formatted_quick_hits += "\n"
+                    
+                    # Replace in cover letter
+                    cover_letter = cover_letter.replace(quick_hits_text, formatted_quick_hits)
+        
+        # Remove duplicate signatures and contact info
+        # Find all signatures (thanks, Best regards, Sincerely, etc.)
+        signature_patterns = [
+            r'\nthanks,\s*\n+.*?(?=\n\n|\Z)',
+            r'\nBest regards,\s*\n+.*?(?=\n\n|\Z)',
+            r'\nSincerely,\s*\n+.*?(?=\n\n|\Z)',
+        ]
+        
+        # Remove all existing signatures
+        for pattern in signature_patterns:
+            cover_letter = re.sub(pattern, '', cover_letter, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Add single, clean signature at the end
+        cover_letter = cover_letter.strip()
+        cover_letter += f"\n\nthanks,\n\n{candidate_info['name']}"
+        
+        # Add contact info once
+        contact_lines = []
+        if candidate_info['email'] and candidate_info['email'] != 'candidate@email.com':
+            contact_lines.append(candidate_info['email'])
+        if candidate_info.get('linkedin'):
+            contact_lines.append(candidate_info['linkedin'])
+        
+        if contact_lines:
+            cover_letter += '\n' + '\n'.join(contact_lines)
+        
+        # Clean up formatting issues
         cover_letter = re.sub(r'\n{3,}', '\n\n', cover_letter)  # Limit to double line breaks
         cover_letter = re.sub(r' +', ' ', cover_letter)  # Remove extra spaces
         
@@ -276,7 +407,7 @@ Please write the complete cover letter now:"""
 
 def generate_llm_cover_letter(resume_text, job_info, instructions_path=""):
     """
-    Main function to generate LLM-powered cover letter using Ollama
+    Main function to generate LLM-powered cover letter using dynamic Tier 1 LLM
     
     Args:
         resume_text (str): Full resume text
@@ -306,20 +437,19 @@ def generate_llm_cover_letter(resume_text, job_info, instructions_path=""):
         return cover_letter, True
         
     except Exception as e:
-        print(f"❌ Error in Ollama cover letter generation: {e}")
+        print(f"❌ Error in LLM cover letter generation: {e}")
         raise
 
 if __name__ == "__main__":
-    # Test the Ollama cover letter generator
-    print("🤖 Testing Ollama Cover Letter Generator")
+    # Test the dynamic LLM cover letter generator
+    print("🤖 Testing Dynamic LLM Cover Letter Generator")
     
-    # Check if Ollama is configured
+    # Check if LLM is configured
     try:
         generator = LLMCoverLetterGenerator()
-        print("✅ Ollama Cover Letter Generator ready")
+        print("✅ Dynamic LLM Cover Letter Generator ready")
     except Exception as e:
-        print(f"❌ Ollama setup error: {e}")
-        print("💡 Make sure Ollama is installed and running:")
-        print("   1. Install Ollama: https://ollama.ai/download")
-        print("   2. Start Ollama: ollama serve")
-        print("   3. Pull a model: ollama pull llama3.1")
+        print(f"❌ LLM setup error: {e}")
+        print("💡 Make sure your LLM provider is configured in .env file:")
+        print("   - For local services: Set TIER1_LLM_PROVIDER, {PROVIDER}_BASE_URL, {PROVIDER}_MODEL")
+        print("   - For API services: Set TIER1_LLM_PROVIDER, {PROVIDER}_API_KEY, {PROVIDER}_MODEL")
